@@ -4,6 +4,22 @@
 
 ---
 
+## Screenshots
+
+### Dashboard (Idle)
+![Pykto Dashboard](Snifx/src/pykto_dashboard.png)
+
+### Live Packet Capture (`▶ Start`)
+![Pykto Capturing Live](Snifx/src/pykto_start.png)
+
+### Stopped Capture (`■ Stop`)
+![Pykto Stopped](Snifx/src/Pykto_stop.png)
+
+### Reset (`↺ Reset`)
+![Pykto Reset](Snifx/src/pykto_dashboard.png)
+
+---
+
 ## Key Features
 
 - **Simple Controls**: One-click **Start**, **Stop**, and **Reset** buttons.
