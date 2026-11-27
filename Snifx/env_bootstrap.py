@@ -8,6 +8,7 @@ when launched with a different Python interpreter.
 """
 
 import hashlib
+import importlib
 import importlib.metadata
 import os
 from pathlib import Path
@@ -139,6 +140,7 @@ def ensure_environment(
             check=False,
         )
         if pip_proc.returncode == 0:
+            importlib.invalidate_caches()
             try:
                 MARKER_FILE.write_text(
                     _requirements_hash(REQ_FILE) + "\n",
