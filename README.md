@@ -51,10 +51,29 @@
 - **GUI Toolkit**: `tkinter` (built into standard Python on Windows/macOS; on Ubuntu/Debian Linux install with `sudo apt install python3-tk` if missing) plus an active desktop display (`DISPLAY` / `XAUTHORITY` on X11).
 - **Third-Party Packages**:
   - **None required** to run with the built-in `Socket` engine on Linux.
-  - **`scapy`** *(optional)* — required only if you select the `Scapy` capture engine (already installed in `Snifx/venv`, or install with `pip install scapy`). On Windows, `Npcap` is also needed for `scapy` L2 sniffing.
+  - **`scapy`** *(optional)* — required only if you select the `Scapy` capture engine (listed in [`requirements.txt`](requirements.txt) and installed into `Snifx/venv` by [`setup_env.sh`](setup_env.sh)). On Windows, `Npcap` is also needed for `scapy` L2 sniffing.
 - **System Privileges**:
   - **Linux**: Root (`sudo -E`) or `cap_net_raw,cap_net_admin=eip` capability on the Python binary.
   - **Windows**: Run terminal/Python as **Administrator**.
+
+---
+
+## Setup Environment
+
+Running `Snifx/app.py` (or `Snifx/scapy_version.py`) automatically creates `Snifx/venv`, installs packages from [`requirements.txt`](requirements.txt) if missing or updated, and switches into the virtual environment.
+
+You can also set up the environment ahead of time with [`setup_env.sh`](setup_env.sh):
+
+```bash
+./setup_env.sh
+```
+
+Or create the virtual environment manually:
+
+```bash
+python3 -m venv Snifx/venv
+./Snifx/venv/bin/pip install -r requirements.txt
+```
 
 ---
 
@@ -156,7 +175,10 @@ python3 Snifx/app.py
 
 ## Project Structure
 
+- `setup_env.sh` — Script to create `Snifx/venv` and install requirements
+- `requirements.txt` — Python package dependencies (`scapy==2.8.0`)
 - `Snifx/app.py` — Pykto Tkinter desktop GUI (`SnifxApp`)
+- `Snifx/env_bootstrap.py` — Auto-creates `Snifx/venv` and installs `requirements.txt` on app launch
 - `Snifx/capture_engine.py` — Real-time background capture controller (`CaptureEngine`)
 - `Snifx/packet_parser.py` — Raw socket & Scapy packet unpacker and hex dump formatter
 - `Snifx/test_snifx.py` — Automated unit and Tkinter UI integration tests

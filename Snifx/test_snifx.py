@@ -221,5 +221,70 @@ class TestSnifxUIAndEngine(unittest.TestCase):
         self.assertFalse(eng.is_running)
 
 
+class TestEnvBootstrap(unittest.TestCase):
+    """Verify automatic venv creation and requirements installation logic."""
+
+    def test_parse_requirement_names(self):
+        import tempfile
+        import env_bootstrap
+
+        with tempfile.TemporaryDirectory() as tmp:
+            req = Path(tmp) / "requirements.txt"
+            req.write_text(
+                "# comment\n\nscapy==2.8.0  # inline comment\n-r base.txt\npytest>=7.0\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                env_bootstrap._parse_requirement_names(req),
+                ["scapy", "pytest"],
+            )
+
+    def test_ensure_environment_creates_venv_and_installs_requirements(self):
+        import os
+        import tempfile
+        from unittest import mock
+        import env_bootstrap
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fake_venv = tmp_path / "venv"
+            fake_req = tmp_path / "requirements.txt"
+            fake_req.write_text("scapy==2.8.0\n", encoding="utf-8")
+            fake_marker = fake_venv / ".requirements.sha256"
+            fake_python = env_bootstrap.get_venv_python(fake_venv)
+            calls = []
+
+            def fake_run(cmd, **_kwargs):
+                calls.append(cmd)
+                if len(cmd) >= 3 and cmd[1:3] == ["-m", "venv"]:
+                    fake_python.parent.mkdir(parents=True, exist_ok=True)
+                    fake_python.write_text("", encoding="utf-8")
+                    return mock.Mock(returncode=0)
+                if "-c" in cmd:
+                    # Simulate package not yet installed before pip runs.
+                    return mock.Mock(returncode=1)
+                if len(cmd) >= 4 and cmd[1:4] == ["-m", "pip", "install"]:
+                    return mock.Mock(returncode=0)
+                return mock.Mock(returncode=0)
+
+            with (
+                mock.patch.object(env_bootstrap, "VENV_DIR", fake_venv),
+                mock.patch.object(env_bootstrap, "REQ_FILE", fake_req),
+                mock.patch.object(env_bootstrap, "MARKER_FILE", fake_marker),
+                mock.patch.object(env_bootstrap.subprocess, "run", side_effect=fake_run),
+                mock.patch.object(env_bootstrap.os, "execv") as mock_execv,
+                mock.patch.dict(os.environ, {}, clear=False),
+            ):
+                os.environ.pop("PYKTO_NO_AUTO_VENV", None)
+                os.environ.pop("PYKTO_BOOTSTRAPPED", None)
+                env_bootstrap.ensure_environment(script_path=tmp_path / "app.py")
+
+            self.assertTrue(any(c[1:3] == ["-m", "venv"] for c in calls))
+            self.assertTrue(any(c[1:4] == ["-m", "pip", "install"] for c in calls))
+            self.assertTrue(fake_marker.is_file())
+            if os.name != "nt":
+                mock_execv.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

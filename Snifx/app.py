@@ -32,6 +32,7 @@ from capture_engine import (  # noqa: E402
     is_scapy_available,
     list_interfaces,
 )
+from env_bootstrap import ensure_environment  # noqa: E402
 from packet_parser import PacketRecord, format_payload_hexdump  # noqa: E402
 
 
@@ -818,4 +819,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    ensure_environment(Path(__file__))
     main()

@@ -16,7 +16,19 @@ RUN (needs admin/root privileges to open a raw socket):
 """
 
 import argparse
-from scapy.all import sniff, IP, TCP, UDP, ICMP, Raw
+from pathlib import Path
+import sys
+
+SNIFX_DIR = Path(__file__).resolve().parent
+if str(SNIFX_DIR) not in sys.path:
+    sys.path.insert(0, str(SNIFX_DIR))
+
+from env_bootstrap import ensure_environment  # noqa: E402
+
+if __name__ == "__main__":
+    ensure_environment(Path(__file__))
+
+from scapy.all import sniff, IP, TCP, UDP, ICMP, Raw  # noqa: E402
 
 
 def handle_packet(packet):
