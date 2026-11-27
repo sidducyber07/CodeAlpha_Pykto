@@ -1,6 +1,19 @@
 # Pykto (`CodeAlpha_Pykto`)
 
-**Pykto** is a standalone Python desktop network sniffer built with Tkinter, Python raw `socket`, and `scapy`. It opens directly as a desktop GUI (no localhost web server required) and displays live network packets in a bounded table with real-time statistics and an interactive packet/payload inspector.
+**Pykto** is a standalone Python desktop network sniffer built with Tkinter, Python raw `socket`, and `scapy`. It opens directly as a desktop GUI (no localhost web server required), automatically bootstraps its virtual environment on first run, and displays live network packets in a bounded table with real-time statistics and an interactive packet/payload inspector.
+
+---
+
+## Demo Video
+
+[![Watch Pykto Demo Video](Snifx/src/pykto_start.png)](untitled.mp4)
+
+> **[▶ Watch / Download Demo Video (`untitled.mp4`)](untitled.mp4)**
+
+**What the walkthrough demonstrates:**
+1. **Clone & First-Run Bootstrap**: Cloning `CodeAlpha_Pykto` and launching `sudo -E python3 Snifx/app.py`, which automatically creates `Snifx/venv`, installs `scapy==2.8.0` from [`requirements.txt`](requirements.txt), and opens the desktop GUI.
+2. **Engine Switching (`Auto` / `Socket` / `Scapy`)**: Starting, stopping, and resetting live packet captures across all three capture modes from the top toolbar.
+3. **Live Packet & Payload Inspection**: Viewing real-time protocol/rate cards and selecting captured rows to inspect decoded headers (**PACKET DETAILS**) alongside the **PAYLOAD PREVIEW (HEX & ASCII)** pane.
 
 ---
 
@@ -27,6 +40,7 @@
 - **Real-Time Traffic Cards**: Live counters for `CAPTURED`, `TCP`, `UDP`, `ICMP`, `OTHER / ARP`, and `DATA / RATE` (total bytes + packets/sec).
 - **Packet & Payload Inspector**: Click any packet row to inspect Ethernet MACs, IPv4/IPv6 headers, TCP flags/sequence numbers, UDP/ICMP fields, and a Hex + ASCII payload preview (up to 512 bytes).
 - **Live Filtering**: Filter by protocol (`ALL`, `TCP`, `UDP`, `ICMP`, `OTHER`), search by IP/port/summary text, toggle `Hide Loopback` (`127.x` / `::1`), and toggle `Auto-scroll`.
+- **Automatic Environment Bootstrap**: Launching `Snifx/app.py` or `Snifx/scapy_version.py` automatically sets up `Snifx/venv` and installs dependencies on first run.
 
 ---
 
@@ -47,11 +61,11 @@
 
 ## Requirements
 
-- **Python**: Python **3.10+** (uses `@dataclass(slots=True)` and PEP 585 type hints).
-- **GUI Toolkit**: `tkinter` (built into standard Python on Windows/macOS; on Ubuntu/Debian Linux install with `sudo apt install python3-tk` if missing) plus an active desktop display (`DISPLAY` / `XAUTHORITY` on X11).
+- **Python**: Python **3.10+** (uses `@dataclass(slots=True)` and PEP 585 type hints). On Ubuntu/Debian/Kali Linux, ensure `python3-venv` is installed if using automatic virtual environment setup (`sudo apt install -y python3-venv`).
+- **GUI Toolkit**: `tkinter` (built into standard Python on Windows/macOS; on Ubuntu/Debian/Kali Linux install with `sudo apt install -y python3-tk` if missing) plus an active desktop display (`DISPLAY` / `XAUTHORITY` on X11).
 - **Third-Party Packages**:
   - **None required** to run with the built-in `Socket` engine on Linux.
-  - **`scapy`** *(optional)* — required only if you select the `Scapy` capture engine (listed in [`requirements.txt`](requirements.txt) and installed into `Snifx/venv` by [`setup_env.sh`](setup_env.sh)). On Windows, `Npcap` is also needed for `scapy` L2 sniffing.
+  - **`scapy==2.8.0`** *(optional, listed in [`requirements.txt`](requirements.txt))* — required only if you select the `Scapy` capture engine (automatically installed into `Snifx/venv` on first launch or via [`setup_env.sh`](setup_env.sh)). On Windows, `Npcap` is also needed for `scapy` L2 sniffing.
 - **System Privileges**:
   - **Linux**: Root (`sudo -E`) or `cap_net_raw,cap_net_admin=eip` capability on the Python binary.
   - **Windows**: Run terminal/Python as **Administrator**.
@@ -60,12 +74,14 @@
 
 ## Setup Environment
 
-Running `Snifx/app.py` (or `Snifx/scapy_version.py`) automatically creates `Snifx/venv`, installs packages from [`requirements.txt`](requirements.txt) if missing or updated, and switches into the virtual environment.
+Running `Snifx/app.py` (or `Snifx/scapy_version.py`) automatically creates `Snifx/venv`, installs packages from [`requirements.txt`](requirements.txt) when missing or updated (tracked via `.requirements.sha256`), and re-execs inside the virtual environment. Set `PYKTO_NO_AUTO_VENV=1` if you want to skip automatic virtual environment setup.
 
-You can also set up the environment ahead of time with [`setup_env.sh`](setup_env.sh):
+You can also set up or recreate the environment ahead of time with [`setup_env.sh`](setup_env.sh):
 
 ```bash
 ./setup_env.sh
+# Or rebuild Snifx/venv from scratch:
+./setup_env.sh --recreate
 ```
 
 Or create the virtual environment manually:
@@ -112,11 +128,11 @@ python3 -m venv Snifx/venv
 Raw packet capture on Linux requires elevated network privileges (`root` or `CAP_NET_RAW`):
 
 ```bash
-# Recommended: using the project virtual environment (supports both Socket and Scapy)
-sudo -E ./Snifx/venv/bin/python Snifx/app.py
-
-# Or using system Python (built-in raw socket engine)
+# Launch directly (auto-creates Snifx/venv and installs requirements on first run)
 sudo -E python3 Snifx/app.py
+
+# Or launch explicitly with the project virtual environment
+sudo -E ./Snifx/venv/bin/python Snifx/app.py
 ```
 
 > **Note:** `sudo -E` preserves `DISPLAY` and `XAUTHORITY` so the desktop window can connect to your graphical session.
@@ -173,17 +189,33 @@ python3 Snifx/app.py
 
 ---
 
+### Optional CLI Sniffers
+
+Pykto also includes two terminal-only sniffers under `Snifx/`:
+
+```bash
+# Built-in raw socket CLI sniffer (no third-party dependencies)
+sudo python3 Snifx/sniffer.py
+
+# Scapy CLI sniffer (supports packet count -c and interface -i flags)
+sudo python3 Snifx/scapy_version.py -c 20 -i eth0
+```
+
+---
+
 ## Project Structure
 
-- `setup_env.sh` — Script to create `Snifx/venv` and install requirements
+- `untitled.mp4` — End-to-end walkthrough demo video of cloning, bootstrapping, capturing, inspecting, stopping, and resetting Pykto
+- `setup_env.sh` — Script to create or `--recreate` `Snifx/venv` and install requirements
 - `requirements.txt` — Python package dependencies (`scapy==2.8.0`)
 - `Snifx/app.py` — Pykto Tkinter desktop GUI (`SnifxApp`)
-- `Snifx/env_bootstrap.py` — Auto-creates `Snifx/venv` and installs `requirements.txt` on app launch
+- `Snifx/env_bootstrap.py` — Auto-creates `Snifx/venv` and installs `requirements.txt` on launch
 - `Snifx/capture_engine.py` — Real-time background capture controller (`CaptureEngine`)
 - `Snifx/packet_parser.py` — Raw socket & Scapy packet unpacker and hex dump formatter
 - `Snifx/test_snifx.py` — Automated unit and Tkinter UI integration tests
 - `Snifx/sniffer.py` — Optional terminal raw-socket sniffer
 - `Snifx/scapy_version.py` — Optional terminal `scapy` sniffer
+- `Snifx/src/` — Dashboard, live capture, and stopped state screenshots
 
 ---
 
